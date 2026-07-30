@@ -23,6 +23,16 @@ npm start
    ```
 4. Add both commands to `/etc/rc.local` or a systemd service
 
+### ⚠️ Keep the Pi clock synced
+The app computes arrival countdowns by comparing the Pi's system time against MTA's Unix timestamps. If the clock is wrong, all countdowns will be off by the same amount.
+
+Make sure NTP is enabled on the Pi (it is by default on Raspberry Pi OS, but just in case):
+```bash
+sudo timedatectl set-ntp true
+```
+
+As long as the Pi has internet access (required for the MTA feed anyway), `systemd-timesyncd` will keep the clock accurate automatically.
+
 ## Data Source
 MTA GTFS-RT feed for the A/C/E line:
 `https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-ace`
