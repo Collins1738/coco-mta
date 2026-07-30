@@ -109,15 +109,17 @@ async function fetchBusArrivals() {
     for (const visit of visits) {
       const mvj = visit.MonitoredVehicleJourney;
       const mc = mvj?.MonitoredCall;
-      const expectedArrival = mc?.ExpectedArrivalTime ?? mc?.ExpectedDepartureTime;
+      const expectedArrival = mc?.ExpectedArrivalTime ?? mc?.ExpectedDepartureTime
+        ?? mc?.AimedArrivalTime ?? mc?.AimedDepartureTime;
       if (!expectedArrival) continue;
 
       const arrivalMs = new Date(expectedArrival).getTime();
       const secsAway = Math.floor((arrivalMs - Date.now()) / 1000);
       if (secsAway < 0 || secsAway > 3600) continue;
 
-      const routeShort = mvj?.PublishedLineName ?? lineRef.split('_')[1];
-      const dest = mvj?.DestinationName ?? '';
+      const routeShort = Array.isArray(mvj?.PublishedLineName) ? mvj.PublishedLineName[0] : (mvj?.PublishedLineName ?? lineRef.split('_')[1]);
+      const destRaw = mvj?.DestinationName ?? '';
+      const dest = Array.isArray(destRaw) ? destRaw[0] : destRaw;
 
       allArrivals.push({
         type: 'bus',
