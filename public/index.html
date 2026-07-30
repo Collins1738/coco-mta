@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Utica Av — A C Trains</title>
+  <title>Utica Av — A C B15 B65</title>
   <style>
     :root {
       --bg: #0a0a0a;
@@ -11,8 +11,8 @@
       --border: #222;
       --text: #f0f0f0;
       --muted: #666;
-      --a-color: #2850ad;
-      --c-color: #2850ad;
+      --blue: #2850ad;
+      --bus-green: #00933c;
       --arriving-color: #ffd700;
       --green: #4caf50;
     }
@@ -36,157 +36,131 @@
       justify-content: space-between;
     }
 
-    .station-name {
-      font-size: 2rem;
-      font-weight: 700;
-      letter-spacing: 0.02em;
-    }
-
-    .station-sub {
-      font-size: 0.95rem;
-      color: var(--muted);
-      margin-top: 4px;
-    }
+    .station-name { font-size: 2rem; font-weight: 700; letter-spacing: 0.02em; }
+    .station-sub { font-size: 0.95rem; color: var(--muted); margin-top: 4px; }
 
     .clock {
       font-size: 1.6rem;
       font-weight: 300;
       letter-spacing: 0.05em;
-      color: var(--text);
       min-width: 120px;
       text-align: right;
     }
 
-    .route-badges {
-      display: flex;
-      gap: 10px;
-      margin-top: 6px;
-    }
+    .route-badges { display: flex; gap: 10px; margin-top: 8px; }
 
     .badge {
-      width: 36px;
-      height: 36px;
+      width: 36px; height: 36px;
       border-radius: 50%;
-      background: var(--a-color);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 800;
-      font-size: 1.1rem;
-      color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 1rem; color: #fff;
+    }
+    .badge.subway { background: var(--blue); }
+    .badge.bus { background: var(--bus-green); border-radius: 6px; font-size: 0.75rem; }
+
+    /* ── Sections ── */
+    main { flex: 1; padding: 28px 40px; display: flex; flex-direction: column; gap: 28px; }
+
+    .section-title {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--muted);
+      margin-bottom: 14px;
     }
 
-    main {
-      flex: 1;
-      padding: 32px 40px;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 24px;
-    }
+    .panels { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 
-    .direction-panel {
+    .panel {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 24px;
+      padding: 20px 24px;
     }
 
-    .direction-label {
-      font-size: 0.75rem;
+    .panel-label {
+      font-size: 0.7rem;
       text-transform: uppercase;
       letter-spacing: 0.12em;
       color: var(--muted);
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }
 
     .train-row {
       display: flex;
       align-items: center;
-      gap: 16px;
-      padding: 16px 0;
+      gap: 14px;
+      padding: 13px 0;
       border-bottom: 1px solid var(--border);
     }
-
-    .train-row:last-child {
-      border-bottom: none;
-    }
+    .train-row:last-child { border-bottom: none; }
 
     .train-badge {
-      width: 44px;
-      height: 44px;
+      width: 40px; height: 40px;
       border-radius: 50%;
-      background: var(--a-color);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 800;
-      font-size: 1.3rem;
-      color: #fff;
+      background: var(--blue);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 1.2rem; color: #fff;
       flex-shrink: 0;
     }
+    .train-badge.bus { background: var(--bus-green); border-radius: 8px; font-size: 0.85rem; }
 
-    .train-info {
-      flex: 1;
-    }
-
-    .train-dest {
-      font-size: 1rem;
-      font-weight: 500;
-      color: var(--text);
-    }
+    .train-info { flex: 1; }
+    .train-dest { font-size: 0.9rem; font-weight: 500; color: var(--text); }
 
     .train-mins {
-      font-size: 2rem;
+      font-size: 1.8rem;
       font-weight: 700;
-      color: var(--text);
-      min-width: 80px;
+      min-width: 70px;
       text-align: right;
     }
+    .train-mins .unit { font-size: 0.8rem; font-weight: 400; color: var(--muted); margin-left: 3px; }
+    .train-mins.arriving { color: var(--arriving-color); }
 
-    .train-mins.arriving {
-      color: var(--arriving-color);
-    }
+    /* ── Bus section ── */
+    .bus-section .panels { grid-template-columns: 1fr 1fr; }
 
-    .train-mins .unit {
-      font-size: 0.9rem;
-      font-weight: 400;
+    .bus-pending {
       color: var(--muted);
-      margin-left: 4px;
+      font-size: 0.88rem;
+      padding: 12px 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .key-badge {
+      display: inline-block;
+      background: #2a2a00;
+      color: #ffd700;
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 4px;
+      border: 1px solid #554400;
     }
 
-    .empty-state {
-      color: var(--muted);
-      font-size: 0.95rem;
-      padding: 20px 0;
-    }
+    .empty-state { color: var(--muted); font-size: 0.9rem; padding: 14px 0; }
 
     footer {
-      padding: 16px 40px;
+      padding: 14px 40px;
       border-top: 1px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       color: var(--muted);
     }
 
     .status-dot {
-      display: inline-block;
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--green);
-      margin-right: 8px;
+      display: inline-block; width: 8px; height: 8px;
+      border-radius: 50%; background: var(--green); margin-right: 7px;
     }
+    .status-dot.error { background: #f44; }
 
-    .status-dot.error {
-      background: #f44;
-    }
-
-    @media (max-width: 700px) {
-      main { grid-template-columns: 1fr; padding: 20px; }
-      header { padding: 20px; }
+    @media (max-width: 720px) {
+      main { padding: 16px 20px; }
+      header { padding: 18px 20px; }
       .station-name { font-size: 1.4rem; }
+      .panels { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -195,33 +169,52 @@
 <header>
   <div>
     <div class="station-name">Utica Av</div>
-    <div class="station-sub">Brooklyn · Fulton St Line</div>
+    <div class="station-sub">Brooklyn · Crown Heights</div>
     <div class="route-badges">
-      <div class="badge">A</div>
-      <div class="badge">C</div>
+      <div class="badge subway">A</div>
+      <div class="badge subway">C</div>
+      <div class="badge bus">B15</div>
+      <div class="badge bus">B65</div>
     </div>
   </div>
   <div class="clock" id="clock">--:--</div>
 </header>
 
 <main>
-  <div class="direction-panel">
-    <div class="direction-label">↑ Northbound — Manhattan</div>
-    <div id="north-list"><div class="empty-state">Loading...</div></div>
+  <!-- Subway -->
+  <div class="subway-section">
+    <div class="section-title">🚇 A · C Trains — Utica Av</div>
+    <div class="panels">
+      <div class="panel">
+        <div class="panel-label">↑ Northbound · Manhattan</div>
+        <div id="subway-north"><div class="empty-state">Loading...</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-label">↓ Southbound · Far Rockaway / Lefferts</div>
+        <div id="subway-south"><div class="empty-state">Loading...</div></div>
+      </div>
+    </div>
   </div>
-  <div class="direction-panel">
-    <div class="direction-label">↓ Southbound — Far Rockaway / Lefferts</div>
-    <div id="south-list"><div class="empty-state">Loading...</div></div>
+
+  <!-- Bus -->
+  <div class="bus-section">
+    <div class="section-title">🚌 B15 · B65 Buses — Bergen St / Utica Av</div>
+    <div id="bus-content">
+      <div class="bus-pending">
+        <span class="key-badge">API KEY PENDING</span>
+        Bus arrivals will appear once the MTA Bus Time API key is configured.
+      </div>
+    </div>
   </div>
 </main>
 
 <footer>
   <div><span class="status-dot" id="status-dot"></span><span id="status-text">Connecting...</span></div>
-  <div>Updates every 30s · MTA GTFS-RT</div>
+  <div>Updates every 30s · MTA GTFS-RT + Bus Time</div>
 </footer>
 
 <script>
-  // Clock
+  // ── Clock ──
   function updateClock() {
     const now = new Date();
     const h = now.getHours().toString().padStart(2, '0');
@@ -232,48 +225,72 @@
   setInterval(updateClock, 1000);
   updateClock();
 
-  // Render train rows
-  function renderList(containerId, trains) {
-    const el = document.getElementById(containerId);
-    if (!trains.length) {
-      el.innerHTML = '<div class="empty-state">No trains in the next hour</div>';
-      return;
-    }
-
-    el.innerHTML = trains.slice(0, 5).map(t => {
-      const isArriving = t.minsAway <= 1;
-      const minsText = isArriving
-        ? '<span class="arriving">Now</span>'
-        : `${t.minsAway}<span class="unit">min</span>`;
-
-      return `
-        <div class="train-row">
-          <div class="train-badge">${t.route}</div>
-          <div class="train-info">
-            <div class="train-dest">${t.directionLabel}</div>
-          </div>
-          <div class="train-mins ${isArriving ? 'arriving' : ''}">${minsText}</div>
-        </div>
-      `;
-    }).join('');
+  // ── Render helpers ──
+  function trainRow(t) {
+    const isArriving = t.minsAway <= 1;
+    const minsHtml = isArriving
+      ? `<div class="train-mins arriving">Now</div>`
+      : `<div class="train-mins">${t.minsAway}<span class="unit">min</span></div>`;
+    const badgeClass = t.type === 'bus' ? 'train-badge bus' : 'train-badge';
+    return `
+      <div class="train-row">
+        <div class="${badgeClass}">${t.route}</div>
+        <div class="train-info"><div class="train-dest">${t.directionLabel}</div></div>
+        ${minsHtml}
+      </div>`;
   }
 
-  // Fetch & update
+  function renderList(containerId, trains, limit = 5) {
+    const el = document.getElementById(containerId);
+    if (!trains.length) {
+      el.innerHTML = '<div class="empty-state">No arrivals in the next hour</div>';
+      return;
+    }
+    el.innerHTML = trains.slice(0, limit).map(trainRow).join('');
+  }
+
+  // ── Bus panels ──
+  function renderBus(buses) {
+    const b15 = buses.filter(b => b.route === 'B15');
+    const b65 = buses.filter(b => b.route === 'B65');
+    document.getElementById('bus-content').innerHTML = `
+      <div class="panels">
+        <div class="panel">
+          <div class="panel-label">B15 · Bedford-Stuyvesant → JFK</div>
+          <div id="bus-b15"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-label">B65 · Downtown Brooklyn → Crown Heights</div>
+          <div id="bus-b65"></div>
+        </div>
+      </div>`;
+    renderList('bus-b15', b15);
+    renderList('bus-b65', b65);
+  }
+
+  // ── Fetch & update ──
   async function refresh() {
     const dot = document.getElementById('status-dot');
     const statusText = document.getElementById('status-text');
-
     try {
       const res = await fetch('/api/arrivals');
       const data = await res.json();
-
       if (!data.ok) throw new Error(data.error);
 
-      const north = data.arrivals.filter(a => a.direction === 'N');
-      const south = data.arrivals.filter(a => a.direction === 'S');
+      // Subway
+      renderList('subway-north', data.subway.filter(a => a.direction === 'N'));
+      renderList('subway-south', data.subway.filter(a => a.direction === 'S'));
 
-      renderList('north-list', north);
-      renderList('south-list', south);
+      // Bus
+      if (data.busKeyMissing) {
+        document.getElementById('bus-content').innerHTML = `
+          <div class="bus-pending">
+            <span class="key-badge">API KEY PENDING</span>
+            Bus arrivals will appear once the MTA Bus Time API key is configured.
+          </div>`;
+      } else {
+        renderBus(data.buses);
+      }
 
       const d = new Date(data.fetchedAt);
       statusText.textContent = `Last updated ${d.toLocaleTimeString()}`;
