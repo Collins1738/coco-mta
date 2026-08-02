@@ -26,10 +26,25 @@ const BUS_API_URL = 'https://bustime-classic.mta.info/api/siri/stop-monitoring.j
 const BUS_API_KEY = process.env.BUS_API_KEY || ''; // set when you have the key
 const SHOW_BUSES = process.env.SHOW_BUSES !== 'false'; // set SHOW_BUSES=false to hide bus section
 
+// ── Weather (Open-Meteo, no key needed) ───────────────────────────────────────
+const WEATHER_URL = 'https://api.open-meteo.com/v1/forecast?latitude=40.6735&longitude=-73.9212&current=temperature_2m,weathercode,precipitation&temperature_unit=fahrenheit&timezone=America%2FNew_York';
+
+function weatherCondition(code) {
+  if (code === 0) return 'sunny';
+  if (code <= 3) return 'cloudy';
+  if (code <= 48) return 'foggy';
+  if (code <= 67) return 'rainy';
+  if (code <= 77) return 'snowy';
+  if (code <= 82) return 'rainy';
+  return 'stormy';
+}
+
 // ── Caches ────────────────────────────────────────────────────────────────────
 let subwayCache = { data: null, fetchedAt: 0 };
 let busCache = { data: null, fetchedAt: 0 };
+let weatherCache = { data: null, fetchedAt: 0 };
 const CACHE_TTL_MS = 20_000;
+const WEATHER_TTL_MS = 5 * 60_000; // 5 min
 
 // ── Subway ────────────────────────────────────────────────────────────────────
 async function fetchSubwayFeed() {
@@ -78,6 +93,37 @@ function getSubwayArrivals(feed) {
 
   arrivals.sort((a, b) => a.arrivalTime - b.arrivalTime);
   return arrivals;
+}
+
+// ── Weather ───────────────────────────────────────────────────────────────────
+async function fetchWeather() {
+  // TEMP: force rainy for UI testing — remove when done
+  if (process.env.WEATHER_OVERRIDE) {
+    const tempF = 68;
+    return { temp: tempF, tempC: Math.round((tempF - 32) * 5 / 9), code: 61, condition: process.env.WEATHER_OVERRIDE };
+  }
+
+  const now = Date.now();
+  if (weatherCache.data && now - weatherCache.fetchedAt < WEATHER_TTL_MS) {
+    return weatherCache.data;
+  }
+  try {
+    const res = await fetch(WEATHER_URL);
+    if (!res.ok) throw new Error(`Weather error: ${res.status}`);
+    const json = await res.json();
+    const current = json.current;
+    const tempF = Math.round(current.temperature_2m);
+    const data = {
+      temp: tempF,
+      tempC: Math.round((tempF - 32) * 5 / 9),
+      code: current.weathercode,
+      condition: weatherCondition(current.weathercode),
+    };
+    weatherCache = { data, fetchedAt: now };
+    return data;
+  } catch (e) {
+    return weatherCache.data ?? null;
+  }
 }
 
 // ── Bus ───────────────────────────────────────────────────────────────────────
@@ -142,7 +188,7 @@ async function fetchBusArrivals() {
 // ── API routes ────────────────────────────────────────────────────────────────
 app.get('/api/arrivals', async (req, res) => {
   try {
-    const feed = await fetchSubwayFeed();
+    const [feed, weather] = await Promise.all([fetchSubwayFeed(), fetchWeather()]);
     const subway = getSubwayArrivals(feed);
     const { arrivals: buses, noKey } = SHOW_BUSES ? await fetchBusArrivals() : { arrivals: [], noKey: false };
 
@@ -152,6 +198,7 @@ app.get('/api/arrivals', async (req, res) => {
       buses,
       busHidden: !SHOW_BUSES,
       busKeyMissing: noKey,
+      weather,
       fetchedAt: subwayCache.fetchedAt,
     });
   } catch (err) {

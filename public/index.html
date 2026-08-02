@@ -34,7 +34,99 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+      transition: background 1s ease;
     }
+
+    /* Weather themes */
+    header.sunny {
+      background: linear-gradient(135deg, #6b4400 0%, #8c5a00 40%, #3d2800 100%);
+      border-bottom-color: #b87800;
+    }
+    header.rainy {
+      background: linear-gradient(135deg, #0a1e3d 0%, #0f2e5a 40%, #071424 100%);
+      border-bottom-color: #1a4a80;
+    }
+    header.stormy {
+      background: linear-gradient(135deg, #150e2e 0%, #1e1540 40%, #0a0a14 100%);
+      border-bottom-color: #3a2a70;
+    }
+    header.cloudy {
+      background: linear-gradient(135deg, #202020 0%, #2e2e2e 40%, #141414 100%);
+      border-bottom-color: #404040;
+    }
+    header.foggy {
+      background: linear-gradient(135deg, #1a1a20 0%, #25252e 40%, #10101a 100%);
+      border-bottom-color: #363640;
+    }
+    header.snowy {
+      background: linear-gradient(135deg, #0e1e30 0%, #1a2e44 40%, #0a1420 100%);
+      border-bottom-color: #2a4a66;
+    }
+
+    /* Rain animation */
+    .rain-container {
+      position: absolute; inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .raindrop {
+      position: absolute;
+      top: -20px;
+      width: 1px;
+      background: linear-gradient(to bottom, transparent, rgba(100,160,255,0.7));
+      border-radius: 1px;
+      animation: fall linear infinite;
+    }
+    @keyframes fall {
+      to { transform: translateY(200px); opacity: 0; }
+    }
+
+    /* Sun glow */
+    .sun-glow {
+      position: absolute;
+      top: -40px; right: -40px;
+      width: 160px; height: 160px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,210,60,0.7) 0%, rgba(255,160,0,0.3) 50%, transparent 70%);
+      animation: pulse 4s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 0.8; }
+      50% { transform: scale(1.15); opacity: 1; }
+    }
+
+    /* Snow animation */
+    .snowflake {
+      position: absolute;
+      top: -10px;
+      color: rgba(200,230,255,0.5);
+      font-size: 10px;
+      animation: snowfall linear infinite;
+    }
+    @keyframes snowfall {
+      to { transform: translateY(160px) rotate(360deg); opacity: 0; }
+    }
+
+    /* Lightning flash */
+    .lightning {
+      position: absolute; inset: 0;
+      background: rgba(180,160,255,0.08);
+      opacity: 0;
+      animation: lightning 8s ease-in-out infinite;
+    }
+    @keyframes lightning {
+      0%, 89%, 91%, 93%, 100% { opacity: 0; }
+      90%, 92% { opacity: 1; }
+    }
+
+    .weather-badge {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 0.85rem; color: var(--muted);
+      margin-top: 6px;
+    }
+    .weather-temp { font-size: 1rem; font-weight: 600; color: var(--text); }
 
     .station-name { font-size: 2rem; font-weight: 700; letter-spacing: 0.02em; }
     .station-sub { font-size: 0.95rem; color: var(--muted); margin-top: 4px; }
@@ -186,6 +278,7 @@
       <div class="badge bus" id="badge-b15">B15</div>
       <div class="badge bus" id="badge-b65">B65</div>
     </div>
+    <div class="weather-badge" id="weather-badge"></div>
   </div>
   <div class="clock" id="clock">--:--</div>
 </header>
@@ -212,6 +305,28 @@
   </div>
 </main>
 
+<!-- DEV TOOLBAR — remove before ship -->
+<div id="dev-toolbar" style="
+  position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%);
+  display: none; gap: 8px; background: #1a1a1a; border: 1px solid #333;
+  border-radius: 10px; padding: 8px 14px; z-index: 999; font-size: 0.8rem;
+">
+  <span style="color:#555; align-self:center; margin-right:4px;">DEV</span>
+  <button onclick="previewWeather('sunny')">☀️ Sunny</button>
+  <button onclick="previewWeather('cloudy')">☁️ Cloudy</button>
+  <button onclick="previewWeather('foggy')">🌫️ Foggy</button>
+  <button onclick="previewWeather('rainy')">🌧️ Rainy</button>
+  <button onclick="previewWeather('stormy')">⛈️ Stormy</button>
+  <button onclick="previewWeather('snowy')">❄️ Snowy</button>
+</div>
+<style>
+  #dev-toolbar button {
+    background: #2a2a2a; border: 1px solid #444; color: #ddd;
+    padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 0.8rem;
+  }
+  #dev-toolbar button:hover { background: #3a3a3a; }
+</style>
+
 <footer>
   <div><span class="status-dot" id="status-dot"></span><span id="status-text">Connecting...</span></div>
   <div>Updates every 30s · MTA GTFS-RT + Bus Time</div>
@@ -230,6 +345,68 @@
   }
   setInterval(updateClock, 1000);
   updateClock();
+
+  // ── Weather ──
+  const weatherEmoji = { sunny: '☀️', cloudy: '☁️', rainy: '🌧️', stormy: '⛈️', snowy: '❄️', foggy: '🌫️' };
+
+  function applyWeather(weather) {
+    if (!weather) return;
+    const header = document.querySelector('header');
+    // Remove old condition classes
+    header.classList.remove('sunny', 'cloudy', 'rainy', 'stormy', 'snowy', 'foggy');
+    header.classList.add(weather.condition);
+
+    // Clear old decorations
+    header.querySelectorAll('.rain-container, .sun-glow, .lightning').forEach(el => el.remove());
+
+    if (weather.condition === 'rainy' || weather.condition === 'stormy') {
+      const container = document.createElement('div');
+      container.className = 'rain-container';
+      const count = weather.condition === 'stormy' ? 30 : 18;
+      for (let i = 0; i < count; i++) {
+        const drop = document.createElement('div');
+        drop.className = 'raindrop';
+        drop.style.left = Math.random() * 100 + '%';
+        drop.style.height = (8 + Math.random() * 14) + 'px';
+        drop.style.animationDuration = (0.4 + Math.random() * 0.5) + 's';
+        drop.style.animationDelay = (Math.random() * 1.5) + 's';
+        container.appendChild(drop);
+      }
+      header.insertBefore(container, header.firstChild);
+    }
+
+    if (weather.condition === 'stormy') {
+      const flash = document.createElement('div');
+      flash.className = 'lightning';
+      header.insertBefore(flash, header.firstChild);
+    }
+
+    if (weather.condition === 'sunny') {
+      const glow = document.createElement('div');
+      glow.className = 'sun-glow';
+      header.insertBefore(glow, header.firstChild);
+    }
+
+    if (weather.condition === 'snowy') {
+      const container = document.createElement('div');
+      container.className = 'rain-container';
+      for (let i = 0; i < 15; i++) {
+        const flake = document.createElement('div');
+        flake.className = 'snowflake';
+        flake.textContent = '❄';
+        flake.style.left = Math.random() * 100 + '%';
+        flake.style.fontSize = (8 + Math.random() * 8) + 'px';
+        flake.style.animationDuration = (1.5 + Math.random() * 2) + 's';
+        flake.style.animationDelay = (Math.random() * 3) + 's';
+        container.appendChild(flake);
+      }
+      header.insertBefore(container, header.firstChild);
+    }
+
+    const emoji = weatherEmoji[weather.condition] ?? '🌡️';
+    document.getElementById('weather-badge').innerHTML =
+      `<span>${emoji}</span><span class="weather-temp">${weather.temp}°F / ${weather.tempC}°C</span>`;
+  }
 
   // ── Render helpers ──
   const WALK_MINS = 10;
@@ -314,6 +491,9 @@
       const data = await res.json();
       if (!data.ok) throw new Error(data.error);
 
+      // Weather
+      applyWeather(data.weather);
+
       // Subway (Manhattan-bound only)
       renderList('subway-north', data.subway.filter(a => a.direction === 'N'));
 
@@ -343,6 +523,11 @@
       dot.className = 'status-dot error';
       statusText.textContent = `Error: ${err.message}`;
     }
+  }
+
+  // DEV: preview weather conditions without server restart — remove before ship
+  function previewWeather(condition) {
+    applyWeather({ condition, temp: 72, tempC: 22 });
   }
 
   refresh();
