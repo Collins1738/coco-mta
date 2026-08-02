@@ -138,6 +138,16 @@
       border: 1px solid #554400;
     }
 
+    .stat-cols { display: flex; gap: 20px; align-items: center; }
+    .stat { text-align: center; min-width: 54px; }
+    .stat-label { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 4px; }
+    .stat-label.primary { color: var(--text); font-weight: 700; letter-spacing: 0.14em; }
+    .stat-val { font-size: 1.5rem; font-weight: 700; line-height: 1; }
+    .stat-val.dim { font-size: 1.2rem; font-weight: 400; color: var(--muted); }
+    .stat-val .unit { font-size: 0.75rem; font-weight: 400; color: var(--muted); }
+    .stat-val.urgent { color: var(--arriving-color); }
+    .stat-divider { width: 1px; height: 32px; background: var(--border); }
+
     .empty-state { color: var(--muted); font-size: 0.9rem; padding: 14px 0; }
 
     footer {
@@ -173,8 +183,8 @@
     <div class="route-badges">
       <div class="badge subway">A</div>
       <div class="badge subway">C</div>
-      <div class="badge bus">B15</div>
-      <div class="badge bus">B65</div>
+      <div class="badge bus" id="badge-b15">B15</div>
+      <div class="badge bus" id="badge-b65">B65</div>
     </div>
   </div>
   <div class="clock" id="clock">--:--</div>
@@ -220,12 +230,41 @@
   updateClock();
 
   // ── Render helpers ──
+  const WALK_MINS = 10;
+
   function trainRow(t) {
+    const badgeClass = t.type === 'bus' ? 'train-badge bus' : 'train-badge';
+
+    if (t.type === 'subway') {
+      const leaveIn = t.minsAway - WALK_MINS;
+      const isUrgent = leaveIn <= 0;
+      const isSoon = leaveIn >= 1 && leaveIn <= 3;
+      const leaveValHtml = isUrgent
+        ? `<div class="stat-val urgent">Go!</div>`
+        : `<div class="stat-val${isSoon ? ' urgent' : ''}">${leaveIn}<span class="unit">m</span></div>`;
+      return `
+        <div class="train-row">
+          <div class="${badgeClass}">${t.route}</div>
+          <div class="train-info"><div class="train-dest">${t.directionLabel}</div></div>
+          <div class="stat-cols">
+            <div class="stat">
+              <div class="stat-label primary">Leave in</div>
+              ${leaveValHtml}
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat">
+              <div class="stat-label">Train in</div>
+              <div class="stat-val dim">${t.minsAway}<span class="unit">m</span></div>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    // Bus — keep original style
     const isArriving = t.minsAway <= 1;
     const minsHtml = isArriving
       ? `<div class="train-mins arriving">Now</div>`
       : `<div class="train-mins">${t.minsAway}<span class="unit">min</span></div>`;
-    const badgeClass = t.type === 'bus' ? 'train-badge bus' : 'train-badge';
     return `
       <div class="train-row">
         <div class="${badgeClass}">${t.route}</div>
@@ -236,11 +275,13 @@
 
   function renderList(containerId, trains, limit = 5) {
     const el = document.getElementById(containerId);
-    if (!trains.length) {
-      el.innerHTML = '<div class="empty-state">No arrivals in the next hour</div>';
+    // For subway trains, filter out ones you can no longer make it to in time
+    const catchable = trains.filter(t => t.type !== 'subway' || t.minsAway >= WALK_MINS - 1);
+    if (!catchable.length) {
+      el.innerHTML = '<div class="empty-state">No trains you can catch right now</div>';
       return;
     }
-    el.innerHTML = trains.slice(0, limit).map(trainRow).join('');
+    el.innerHTML = catchable.slice(0, limit).map(trainRow).join('');
   }
 
   // ── Bus panels ──
@@ -275,13 +316,21 @@
       renderList('subway-north', data.subway.filter(a => a.direction === 'N'));
 
       // Bus
-      if (data.busKeyMissing) {
+      const busSection = document.querySelector('.bus-section');
+      const showBusBadges = !data.busHidden;
+      document.getElementById('badge-b15').style.display = showBusBadges ? '' : 'none';
+      document.getElementById('badge-b65').style.display = showBusBadges ? '' : 'none';
+      if (data.busHidden) {
+        busSection.style.display = 'none';
+      } else if (data.busKeyMissing) {
+        busSection.style.display = '';
         document.getElementById('bus-content').innerHTML = `
           <div class="bus-pending">
             <span class="key-badge">API KEY PENDING</span>
             Bus arrivals will appear once the MTA Bus Time API key is configured.
           </div>`;
       } else {
+        busSection.style.display = '';
         renderBus(data.buses);
       }
 

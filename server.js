@@ -24,6 +24,7 @@ const BUS_STOP_ID = '301072';
 const BUS_LINES = ['MTA NYCT_B15', 'MTA NYCT_B65'];
 const BUS_API_URL = 'https://bustime-classic.mta.info/api/siri/stop-monitoring.json';
 const BUS_API_KEY = process.env.BUS_API_KEY || ''; // set when you have the key
+const SHOW_BUSES = process.env.SHOW_BUSES !== 'false'; // set SHOW_BUSES=false to hide bus section
 
 // ── Caches ────────────────────────────────────────────────────────────────────
 let subwayCache = { data: null, fetchedAt: 0 };
@@ -143,12 +144,13 @@ app.get('/api/arrivals', async (req, res) => {
   try {
     const feed = await fetchSubwayFeed();
     const subway = getSubwayArrivals(feed);
-    const { arrivals: buses, noKey } = await fetchBusArrivals();
+    const { arrivals: buses, noKey } = SHOW_BUSES ? await fetchBusArrivals() : { arrivals: [], noKey: false };
 
     res.json({
       ok: true,
       subway,
       buses,
+      busHidden: !SHOW_BUSES,
       busKeyMissing: noKey,
       fetchedAt: subwayCache.fetchedAt,
     });
