@@ -97,12 +97,6 @@ function getSubwayArrivals(feed) {
 
 // ── Weather ───────────────────────────────────────────────────────────────────
 async function fetchWeather() {
-  // TEMP: force rainy for UI testing — remove when done
-  if (process.env.WEATHER_OVERRIDE) {
-    const tempF = 68;
-    return { temp: tempF, tempC: Math.round((tempF - 32) * 5 / 9), code: 61, condition: process.env.WEATHER_OVERRIDE };
-  }
-
   const now = Date.now();
   if (weatherCache.data && now - weatherCache.fetchedAt < WEATHER_TTL_MS) {
     return weatherCache.data;
