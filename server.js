@@ -57,6 +57,7 @@ function getSubwayArrivals(feed) {
     for (const stop of (stopTimeUpdate || [])) {
       if (!stop.stopId?.startsWith(SUBWAY_STATION_ID)) continue;
       const direction = stop.stopId.slice(-1);
+      if (direction !== 'N') continue; // only show Manhattan-bound trains
       const arrivalTime = stop.arrival?.time ?? stop.departure?.time;
       if (!arrivalTime) continue;
 

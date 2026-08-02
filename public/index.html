@@ -184,15 +184,9 @@
   <!-- Subway -->
   <div class="subway-section">
     <div class="section-title">🚇 A · C Trains — Utica Av</div>
-    <div class="panels">
-      <div class="panel">
-        <div class="panel-label">↑ Northbound · Manhattan</div>
-        <div id="subway-north"><div class="empty-state">Loading...</div></div>
-      </div>
-      <div class="panel">
-        <div class="panel-label">↓ Southbound · Far Rockaway / Lefferts</div>
-        <div id="subway-south"><div class="empty-state">Loading...</div></div>
-      </div>
+    <div class="panel">
+      <div class="panel-label">↑ Northbound · Manhattan</div>
+      <div id="subway-north"><div class="empty-state">Loading...</div></div>
     </div>
   </div>
 
@@ -277,9 +271,8 @@
       const data = await res.json();
       if (!data.ok) throw new Error(data.error);
 
-      // Subway
+      // Subway (Manhattan-bound only)
       renderList('subway-north', data.subway.filter(a => a.direction === 'N'));
-      renderList('subway-south', data.subway.filter(a => a.direction === 'S'));
 
       // Bus
       if (data.busKeyMissing) {
