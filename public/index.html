@@ -122,11 +122,11 @@
     }
 
     .weather-badge {
-      display: flex; align-items: center; gap: 8px;
-      font-size: 0.85rem; color: var(--muted);
-      margin-top: 6px;
+      display: flex; align-items: center; gap: 10px;
+      margin-top: 10px;
     }
-    .weather-temp { font-size: 1rem; font-weight: 600; color: var(--text); }
+    .weather-emoji { font-size: 1.8rem; line-height: 1; }
+    .weather-temp { font-size: 1.4rem; font-weight: 700; color: var(--text); letter-spacing: 0.02em; }
 
     .station-name { font-size: 2rem; font-weight: 700; letter-spacing: 0.02em; }
     .station-sub { font-size: 0.95rem; color: var(--muted); margin-top: 4px; }
@@ -278,9 +278,11 @@
       <div class="badge bus" id="badge-b15">B15</div>
       <div class="badge bus" id="badge-b65">B65</div>
     </div>
-    <div class="weather-badge" id="weather-badge"></div>
   </div>
-  <div class="clock" id="clock">--:--</div>
+  <div style="text-align: right;">
+    <div class="clock" id="clock">--:--</div>
+    <div class="weather-badge" id="weather-badge" style="justify-content: flex-end; margin-top: 6px;"></div>
+  </div>
 </header>
 
 <main>
@@ -405,7 +407,7 @@
 
     const emoji = weatherEmoji[weather.condition] ?? '🌡️';
     document.getElementById('weather-badge').innerHTML =
-      `<span>${emoji}</span><span class="weather-temp">${weather.temp}°F / ${weather.tempC}°C</span>`;
+      `<span class="weather-emoji">${emoji}</span><span class="weather-temp">${weather.temp}°F / ${weather.tempC}°C</span>`;
   }
 
   // ── Render helpers ──
