@@ -12,6 +12,7 @@ const PORT = process.env.PORT || 3000;
 // ── Subway (A/C) ─────────────────────────────────────────────────────────────
 const SUBWAY_FEED_URL = 'https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-ace';
 const SUBWAY_STATION_ID = 'A48'; // Utica Av on A/C lines
+const SHOW_C_TRAIN = false; // set to true to also show C trains alongside A trains
 const SUBWAY_DIRECTION_LABEL = {
   N: 'Manhattan',
   S: 'Far Rockaway / Lefferts',
@@ -68,7 +69,8 @@ function getSubwayArrivals(feed) {
     if (!entity.tripUpdate) continue;
     const { trip, stopTimeUpdate } = entity.tripUpdate;
     const route = trip?.routeId;
-    if (!['A', 'C'].includes(route)) continue;
+    const allowedRoutes = SHOW_C_TRAIN ? ['A', 'C'] : ['A'];
+    if (!allowedRoutes.includes(route)) continue;
 
     for (const stop of (stopTimeUpdate || [])) {
       if (!stop.stopId?.startsWith(SUBWAY_STATION_ID)) continue;
