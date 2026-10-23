@@ -410,7 +410,7 @@
   }
 
   // ── Render helpers ──
-  const WALK_MINS = 10;
+  let WALK_MINS = 10;
 
   function trainRow(t) {
     const badgeClass = t.type === 'bus' ? 'train-badge bus' : 'train-badge';
@@ -456,7 +456,7 @@
   function renderList(containerId, trains, limit = 5) {
     const el = document.getElementById(containerId);
     // For subway trains, filter out ones you can no longer make it to in time
-    const catchable = trains.filter(t => t.type !== 'subway' || t.minsAway >= WALK_MINS - 1);
+    const catchable = trains.filter(t => t.type !== 'subway' || t.arrivalTime >= Math.floor(Date.now() / 1000) + WALK_MINS * 60);
     if (!catchable.length) {
       el.innerHTML = '<div class="empty-state">No trains you can catch right now</div>';
       return;
@@ -491,6 +491,7 @@
       const res = await fetch('/api/arrivals');
       const data = await res.json();
       if (!data.ok) throw new Error(data.error);
+      WALK_MINS = data.walkMinutes ?? WALK_MINS;
 
       // Weather
       applyWeather(data.weather);
