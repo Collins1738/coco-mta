@@ -44,3 +44,11 @@ No API key required. Feed refreshes every ~30 seconds on the server; client poll
 - **GTFS Stop ID:** `A48`
 - **Northbound (A48N):** towards Manhattan
 - **Southbound (A48S):** towards Far Rockaway / Lefferts Blvd
+
+## Departure API for voice assistants
+
+`GET /api/departure` returns one computed answer for the next catchable Manhattan-bound A train at Utica Av. The API uses the kiosk's **10-minute** walk time (the current UI value, not 9). It skips trains arriving before the walk is complete. No query parameters or MTA key are needed.
+
+A successful response contains `ok: true`, `fetchedAt` (Unix milliseconds), and `departure`. When a train is available, `departure` includes `route`, `station`, `directionLabel`, `arrivalTime` and `leaveAt` (Unix seconds), `leaveInMinutes`, and `walkMinutes`. When none is catchable, `departure` is `null` and `message` explains why. If the live MTA feed fails or its timestamp is more than two minutes old, the route returns HTTP 503 with `ok: false`. Voice clients should use `leaveAt` for the local leave time and avoid redoing the walk calculation.
+
+This is specific to the Manhattan-bound A at Utica Av. It does not plan trips to arbitrary destinations, southbound trains, or buses.

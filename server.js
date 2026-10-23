@@ -4,6 +4,7 @@ import GtfsRealtimeBindings from 'gtfs-realtime-bindings';
 const { transit_realtime } = GtfsRealtimeBindings;
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { nextDeparture, WALK_MINUTES } from './departure.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -191,6 +192,7 @@ app.get('/api/arrivals', async (req, res) => {
     res.json({
       ok: true,
       subway,
+      walkMinutes: WALK_MINUTES,
       buses,
       busHidden: !SHOW_BUSES,
       busKeyMissing: noKey,
@@ -200,6 +202,27 @@ app.get('/api/arrivals', async (req, res) => {
   } catch (err) {
     console.error('Feed error:', err.message);
     res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+// A single voice-friendly answer for leaving home to catch the next Manhattan-bound A.
+app.get('/api/departure', async (req, res) => {
+  try {
+    const feed = await fetchSubwayFeed();
+    const feedAgeSeconds = Math.floor(Date.now() / 1000) - Number(feed.header?.timestamp);
+    if (!Number.isFinite(feedAgeSeconds) || feedAgeSeconds < -60 || feedAgeSeconds > 120) {
+      throw new Error('Subway feed is stale');
+    }
+    const departure = nextDeparture(getSubwayArrivals(feed));
+    res.json({
+      ok: true,
+      departure,
+      message: departure ? null : 'No catchable Manhattan-bound A trains at Utica Av right now.',
+      fetchedAt: subwayCache.fetchedAt,
+    });
+  } catch (err) {
+    console.error('Departure feed error:', err.message);
+    res.status(503).json({ ok: false, error: 'Live subway arrival data is unavailable.' });
   }
 });
 
